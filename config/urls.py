@@ -15,8 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.shortcuts import redirect
+from allauth.socialaccount.providers.kakao import views as kakao_views
+from language_ribbon import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("", views.home, name="root"),
+    path("home/", views.home, name="home"),
+    path("admin/", admin.site.urls, name="admin"),
+    path("", include("accounts.urls"), name="accounts"),
 ]
