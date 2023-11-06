@@ -9,4 +9,5 @@ urlpatterns = [
     # path("social/", kakao_views.oauth2_login),
     path("", include("allauth.socialaccount.providers.kakao.urls")),
     path("logout/", views.logout, name="logout"),
+    path("signup/", views.signup, name="signup"),
 ]
