@@ -10,4 +10,5 @@ urlpatterns = [
     path("", include("allauth.socialaccount.providers.kakao.urls")),
     path("logout/", views.logout, name="logout"),
     path("signup/", views.signup, name="signup"),
+    path("uploadvoice/", views.uploadvoice, name="uploadvoice"),
 ]

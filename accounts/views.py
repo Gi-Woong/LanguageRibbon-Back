@@ -1,7 +1,11 @@
+import requests
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
+from Levenshtein import distance as levenshtein_distance
+import aiohttp
 
 from .forms import SignupForm
 from django.contrib.auth import authenticate
@@ -63,3 +67,38 @@ def signup(request):
 
     context = {"form": form}
     return render(request, "registration/signup.html", context)
+
+
+@csrf_exempt  # CSRF 보호 기능 비활성화
+async def uploadvoice(request):
+    if request.method == 'POST':
+        audio_file = request.FILES['audio']  # 'audio'라는 이름의 파일
+        url = "URL" # STT API URL
+        headers = {'Content-Type': 'multipart/form-data'}
+        data = {'lang': 'kr'}
+        files = {'audio': audio_file}
+
+        async with aiohttp.ClientSession() as session: # 비동기
+            async with session.post(url, headers=headers, data=data, files=files) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    received_text = data['text']  # STT 값
+
+                    original_script = "원래 가지고 있던 스크립트"  # 스크립트
+                    cer = levenshtein_distance(original_script, received_text) / len(original_script) # CER 계산
+
+                    if cer <= 0.3:
+                        return JsonResponse(
+                            {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
+                             "metric": {"cer": cer}})
+                    elif cer > 0.3:
+                        return JsonResponse(
+                            {"uploadSuccess": True, "confirm": False, "message": "초기 목소리 데이터 수집에 실패했습니다.",
+                             "metric": {"cer": cer}})
+                else:
+                    return JsonResponse({"message": "POST 요청 실패"})
+    else:
+        return JsonResponse({"message": "POST 요청이 아닙니다."})
+
+
+

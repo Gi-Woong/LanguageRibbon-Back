@@ -1,0 +1,6 @@
+<h2>목소리 데이터 업로드</h2>
+<form id="uploadForm" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>파일 선택: <input type="file" name="audio" required></p>
+    <button type="submit">업로드</button>
+</form>
