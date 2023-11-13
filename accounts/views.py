@@ -1,7 +1,9 @@
+import requests
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
 
 from .forms import SignupForm
 from django.contrib.auth import authenticate
@@ -63,3 +65,28 @@ def signup(request):
 
     context = {"form": form}
     return render(request, "registration/signup.html", context)
+
+@csrf_exempt # CSRF 보호 기능 비활성화
+def uploadvoice(request):
+    if request.method == 'POST':
+        audio_file = request.FILES['audio'] # 'audio'라는 이름의 파일
+        url = "https://backend-api.languageribbon.kro.kr/uploadvoice"
+        headers = {'Content-Type': 'multipart/form-data'}
+        data = {'lang': 'kr'}
+        files = {'audio': audio_file}
+
+        response = requests.post(url, headers = headers, data = data, files = files)
+
+        if response.status_code == 200:
+            data = response.json()
+            cer = data['metric']['cer']
+            if cer <= 0.3:
+                return render(request, "registration/uploadvoice.html", {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.", "metric": {"cer": cer}})
+            elif cer > 0.3:
+                return render(request, "registration/uploadvoice.html", {"uploadSuccess": True, "confirm": False, "message": "초기 목소리 데이터 수집에 실패했습니다.", "metric": {"cer": cer}})
+        else:
+            return render(request, "registration/uploadvoice.html", {"message": "POST 요청 실패"})
+    else:
+        return render(request, "registration/uploadvoice.html")
+
+
