@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>파일 업로드 폼</title>
+    <!-- 기타 필요한 메타 태그들... -->
+</head>
+<body>
+    <form method="POST" enctype="multipart/form-data">
+        <label for="lang">언어 선택:</label>
+        <select id="lang" name="lang">
+            <option value="kr">한국어</option>
+            <option value="en">영어</option>
+        </select>
+        <br>
+        <label for="target-lang">대상 언어 선택:</label>
+        <select id="target-lang" name="target-lang">
+            <option value="kr">한국어</option>
+            <option value="en">영어</option>
+        </select>
+        <br>
+        <input type="file" name="audio">
+        <input type="submit" value="Upload">
+    </form>
+</body>
+</html>
