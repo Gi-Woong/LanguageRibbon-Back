@@ -3,7 +3,7 @@ import os
 import logging
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
 import requests
 import time
@@ -14,6 +14,7 @@ CLIENT_SECRET = "{CLIENT_SECRET}"
 GPT_KEY = "{GPT_KEY}"
 
 logger = logging.getLogger(__name__)
+
 
 # TODO: 임시로 만든 home 컨트롤러임(추후 삭제 필요)
 def home(request):
@@ -120,6 +121,9 @@ def translate_text(input_text, target_lang):
 # translate_to_text: 음성을 넣었을 때 target_lang에 해당하는 텍스트 문장 생성
 @csrf_exempt
 def translate_to_text(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+
     if request.method == 'GET':
         return render(request, 'convert/language_ribbon.html')
 
@@ -156,6 +160,9 @@ def translate_to_text(request):
 # translate_to_voice: 음성을 넣었을 때 target_lang에 해당하는, 목소리 변조된 음성 출력(미완성)
 @csrf_exempt
 def translate_to_voice(request):
+    if request.user.is_authenticated:
+        return redirect("/")
+
     if request.method == 'GET':
         return render(request, 'convert/language_ribbon.html')
 
