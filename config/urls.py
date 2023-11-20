@@ -25,4 +25,5 @@ urlpatterns = [
     path("home/", views.home, name="home"),
     path("admin/", admin.site.urls, name="admin"),
     path("", include("accounts.urls"), name="accounts"),
+    path("", include("language_ribbon.urls"), name="language_ribbon"),
 ]
