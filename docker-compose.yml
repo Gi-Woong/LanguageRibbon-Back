@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: thin9_back
+    container_name: lr_back
     volumes:
       - .:/app
     ports:
