@@ -19,3 +19,4 @@ aiohttp~=3.8.6
 Levenshtein~=0.23.0
 mysqlclient
 django-environ==0.11.2
+gtts
