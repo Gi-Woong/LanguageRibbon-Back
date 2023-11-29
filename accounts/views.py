@@ -13,8 +13,8 @@ from .models import UserProfile
 
 
 def login(request):
-    # if request.user.is_authenticated:
-    #     return redirect("/")
+    if request.user.is_authenticated:
+        return redirect("/")
     if request.method == "POST":
         form = AuthenticationForm(request, request.POST)
         if form.is_valid():
