@@ -11,6 +11,8 @@ class UserProfile(models.Model):
     age = models.IntegerField()
     job = models.IntegerField()
     englishLevel = models.IntegerField()
+    voice_info_kr = models.CharField(max_length=(200), null=True)
+    voice_info_en = models.CharField(max_length=(200), null=True)
 
     class Meta:
         app_label = 'accounts'

@@ -13,13 +13,20 @@ from .models import UserProfile
 
 
 def login(request):
-    if request.user.is_authenticated:
-        return redirect("/")
+    # if request.user.is_authenticated:
+    #     return redirect("/")
     if request.method == "POST":
         form = AuthenticationForm(request, request.POST)
         if form.is_valid():
+            response_json = {}
             auth_login(request, form.get_user())
-            return redirect("/")
+            profile = UserProfile.objects.filter(user_id=form.get_user().id)
+            profile_exists = profile.exists()
+            if profile_exists:
+                response_json["voice_info_en"] =  True if profile.get().voice_info_en else False
+                response_json["voice_info_kr"] =  True if profile.get().voice_info_kr else False
+                response_json["name"] = profile.get().name
+            return JsonResponse(response_json)
     else:
         form = AuthenticationForm()
     context = {"form": form}
