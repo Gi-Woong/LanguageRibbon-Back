@@ -174,6 +174,17 @@ def get_temporary_file_path(file):
     return temp_file.name
 
 
+def get_response_based_on_cer(cer):
+    if cer <= 0.3:
+        return JsonResponse(
+            {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
+             "metric": {"cer": cer}})
+    else:
+        return JsonResponse(
+            {"uploadSuccess": True, "confirm": False, "message": "초기 목소리 데이터 수집에 실패했습니다.",
+             "metric": {"cer": cer}})
+
+
 @csrf_exempt  # CSRF 보호 기능 비활성화
 def uploadvoice(request):
     if request.method == 'POST':
@@ -184,39 +195,66 @@ def uploadvoice(request):
         if not audio_file or lang not in ['kr', 'en']:
             return JsonResponse({"message": "잘못된 요청입니다."})
 
-        file_path = get_temporary_file_path(audio_file)
+        elif lang == 'en':
 
-        transcription_status = eng_translate_voice_to_text(file_path)
+            file_path = get_temporary_file_path(audio_file)
 
-        formatted_data = json.dumps(transcription_status, ensure_ascii=False)
+            transcription_status = eng_translate_voice_to_text(file_path)
 
-        data_en = json.loads(formatted_data)
+            formatted_data = json.dumps(transcription_status, ensure_ascii=False)
 
-        received_text = data_en['text']  # STT 값
+            data_en = json.loads(formatted_data)
 
-        original_script = "Eat well, Sleep well, and Stay healthy!"  # 스크립트
+            received_text = data_en['text']  # STT 값
 
-        result = metrics.get_cer(received_text, original_script)
+            original_script = "Eat well, Sleep well, and Stay healthy!"  # 스크립트
 
-        cer = result['cer']
-        substitutions = result['substitutions']
-        deletions = result['deletions']
-        insertions = result['insertions']
+            result = metrics.get_cer(received_text, original_script)
 
-        print(original_script)
-        print(received_text)
-        print(cer)
-        print(substitutions)
-        print(deletions)
-        print(insertions)
+            cer = result['cer']
+            substitutions = result['substitutions']
+            deletions = result['deletions']
+            insertions = result['insertions']
 
-        if cer <= 0.3:
-            return JsonResponse(
-                {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
-                 "metric": {"cer": cer}})
-        elif cer > 0.3:
-            return JsonResponse(
-                {"uploadSuccess": True, "confirm": False, "message": "초기 목소리 데이터 수집에 실패했습니다.",
-                 "metric": {"cer": cer}})
+            print(original_script)
+            print(received_text)
+            print(cer)
+            print(substitutions)
+            print(deletions)
+            print(insertions)
+
+            return get_response_based_on_cer(cer)
+        
+        elif lang == 'kr':
+
+            jwt_token = authenticate()
+            transcribe_id = transcribe(jwt_token, request.FILES['audio'])
+            transcription_status = get_transcription_status(jwt_token, transcribe_id)
+
+            formatted_data = json.dumps(transcription_status, ensure_ascii=False)
+
+            data = json.loads(formatted_data)
+
+            utterances = data['results']['utterances']
+            msgs = ' '.join([utterance['msg'] for utterance in utterances])
+
+            original_script = "잘 먹고 잘 자고 건강하세요"  # 스크립트
+
+            result = metrics.get_cer(msgs, original_script)
+
+            cer = result['cer']
+            substitutions = result['substitutions']
+            deletions = result['deletions']
+            insertions = result['insertions']
+
+            print(original_script)
+            print(msgs)
+            print(cer)
+            print(substitutions)
+            print(deletions)
+            print(insertions)
+
+            return get_response_based_on_cer(cer)
+
     else:
         return JsonResponse({"message": "POST 요청이 아닙니다."})
