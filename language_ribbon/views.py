@@ -10,10 +10,15 @@ import time
 import json
 from gtts import gTTS
 import tempfile
+import environ
 
-CLIENT_ID = "mykey"
-CLIENT_SECRET = "mykey"
-GPT_KEY = "mykey"
+ENV = environ.Env(DEBUG=(bool, True))
+environ.Env.read_env()
+
+CLIENT_ID = ENV('CLIENT_ID')
+CLIENT_SECRET = ENV('CLIENT_SECRET')
+GPT_KEY = ENV('GPT_KEY')
+HUG_KEY = ENV('HUG_KEY')
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +144,7 @@ def translate_text_to_voice(text, target_lang):
 
 def eng_translate_voice_to_text(filename):
     API_URL = "https://api-inference.huggingface.co/models/jonatasgrosman/wav2vec2-large-xlsr-53-english"
-    headers = {"Authorization": "Bearer mykey"}
+    headers = {"Authorization": f'Bearer {HUG_KEY}'}
 
     with open(filename, "rb") as f:
         data = f.read()
