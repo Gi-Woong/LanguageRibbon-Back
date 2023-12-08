@@ -42,7 +42,9 @@ def login(request):
                 response_json["voice_info_en"] = True if profile.get().voice_info_en else False
                 response_json["voice_info_kr"] = True if profile.get().voice_info_kr else False
                 response_json["name"] = profile.get().name
-            return JsonResponse(response_json)
+            return JsonResponse(response_json, status=200)
+        else:
+            return JsonResponse({"error": "Invalid login details"}, status=400)
     else:
         form = AuthenticationForm()
     context = {"form": form}
