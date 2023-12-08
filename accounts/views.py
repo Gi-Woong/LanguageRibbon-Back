@@ -59,7 +59,7 @@ def logout(request):
         redirect_url = '/'
         response = HttpResponseRedirect(redirect_url)
         response['X-Json-Response'] = json_response.content  # JSON 응답을 응답 헤더에 추가
-        return response
+        return json_response
     return redirect("login")
 
 
