@@ -83,10 +83,12 @@ def signup(request):
             )
             user_profile.save()
 
-            user = authenticate(username=form.cleaned_data.get('username'), password=form.cleaned_data.get('password1'))
-            auth_login(request, user)
+            return JsonResponse({"message": "The registration has been completed successfully."})
 
-            return JsonResponse({"message": "회원가입이 정상적으로 완료되었습니다."})
+        else:
+            errors = form.errors
+            if 'username' in errors:
+                return JsonResponse({"message": "The username already exists."})
 
     else:
         form = SignupForm()
