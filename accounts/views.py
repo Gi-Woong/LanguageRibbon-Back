@@ -15,11 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .forms import SignupForm
 from .models import UserProfile
-
-ENV = environ.Env(DEBUG=(bool, True))
-environ.Env.read_env()
-
-logger = logging.getLogger(__name__)
+from config.settings import ENV
 
 CLIENT_ID = ENV('CLIENT_ID')
 CLIENT_SECRET = ENV('CLIENT_SECRET')

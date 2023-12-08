@@ -10,10 +10,7 @@ import time
 import json
 from gtts import gTTS
 import tempfile
-import environ
-
-ENV = environ.Env(DEBUG=(bool, True))
-environ.Env.read_env()
+from config.settings import ENV
 
 CLIENT_ID = ENV('CLIENT_ID')
 CLIENT_SECRET = ENV('CLIENT_SECRET')
