@@ -8,10 +8,9 @@ import time
 import json
 from gtts import gTTS
 import tempfile
-import environ
-
-ENV = environ.Env(DEBUG=(bool, True))
-environ.Env.read_env()
+from config.settings import ENV
+from config.s3 import s3, bucket_name
+from pydub import AudioSegment
 
 CLIENT_ID = ENV('CLIENT_ID')
 CLIENT_SECRET = ENV('CLIENT_SECRET')
@@ -200,7 +199,7 @@ def translate_to_text(request):
 # translate_to_voice: 음성을 넣었을 때 target_lang에 해당하는, 목소리 변조된 음성 출력(변조 미완성)
 @csrf_exempt
 def translate_to_voice(request):
-    if request.user.is_authenticated:
+    if not request.user.is_authenticated:
         return redirect("/")
 
     if request.method == 'GET':
@@ -248,7 +247,20 @@ def translate_to_voice(request):
 
             translate_results = [translate_text(msg, target_lang) for msg in msgs]
 
-            voice_files = [translate_text_to_voice(result, target_lang) for result in translate_results]
+            voice_files = [translate_text_to_voice(result, target_lang) for result in translate_results][0]
+            print( f"{request.user.id}_{lang}")
+            response = s3.get_object(Bucket=bucket_name, Key=f"/voices/{request.user.id}_{lang}.wav")
+            object_data = response['Body'].read()
+            print(voice_files)
+            wav_path = voice_files.rstrip(".mp3")+".wav"
+            AudioSegment.from_mp3(voice_files).export(wav_path, format="wav")
+            files = {
+                'file1': open(wav_path, 'rb'),  # 첫 번째 음성 파일
+                'file2': object_data  # 두 번째 음성 파일
+            }
+            url = f"{ENV('AWS_DIFF_VC_SERVER')}/convert"
+            diff_vc_response = requests.post(url, files=files)
+
 
             results = {
                 "targetLang": target_lang,
@@ -257,6 +269,14 @@ def translate_to_voice(request):
                 "voice_files": voice_files
             }
 
-            return HttpResponse(json.dumps(results, ensure_ascii=False), content_type="application/json")
+            # Django HttpResponse 생성
+            response = HttpResponse(content_type='audio/wav')  # WAV 형식의 MIME 타입으로 설정
+            response['Content-Disposition'] = 'attachment; filename="audio.wav"'  # WAV 파일 이름 설정
+            response.write(diff_vc_response.content)  # 음성 파일을 HttpResponse에 작성
+
+            # JSON 데이터를 응답 헤더에 추가
+            response['X-Json-Response'] = results
+            return response
+            # return HttpResponse(json.dumps(results, ensure_ascii=False), content_type="application/json")
 
     return HttpResponseBadRequest('지원하지 않는 언어 조합입니다.')

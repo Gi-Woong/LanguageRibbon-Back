@@ -15,12 +15,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .forms import SignupForm
 from .models import UserProfile
-
-ENV = environ.Env(DEBUG=(bool, True))
-environ.Env.read_env()
-
-logger = logging.getLogger(__name__)
-
+from config.settings import ENV
+from config.s3 import s3, bucket_name
 CLIENT_ID = ENV('CLIENT_ID')
 CLIENT_SECRET = ENV('CLIENT_SECRET')
 GPT_KEY = ENV('GPT_KEY')
@@ -178,11 +174,18 @@ def get_temporary_file_path(file):
     return temp_file.name
 
 
-def get_response_based_on_cer(cer):
+def get_response_based_on_cer(request, lang_type, file_path, cer):
     if cer <= 0.3:
-        return JsonResponse(
-            {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
-             "metric": {"cer": cer}})
+        try:
+            s3.upload_file(file_path, bucket_name, f"/voices/{request.user.id}_{lang_type}.wav")
+            return JsonResponse(
+                {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
+                 "metric": {"cer": cer}})
+        except Exception as e:
+            print(e)
+            return JsonResponse(
+                {"uploadSuccess": False, "confirm": False, "message": "초기 목소리 데이터 저장에 실패했습니다. 다시 시도해주세요.",
+                 "metric": {"cer": cer}})
     else:
         return JsonResponse(
             {"uploadSuccess": True, "confirm": False, "message": "초기 목소리 데이터 수집에 실패했습니다.",
@@ -191,7 +194,7 @@ def get_response_based_on_cer(cer):
 
 @csrf_exempt  # CSRF 보호 기능 비활성화
 def uploadvoice(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and request.user.is_authenticated:
         lang = request.POST.get('lang', 'kr')  # 'lang' 값 받기, 기본값은 'kr'
         audio_file = request.FILES.get('audio')  # 'audio'라는 이름의 파일
 
@@ -200,21 +203,14 @@ def uploadvoice(request):
             return JsonResponse({"message": "잘못된 요청입니다."})
 
         elif lang == 'en':
-
             file_path = get_temporary_file_path(audio_file)
-
             transcription_status = eng_translate_voice_to_text(file_path)
-
             formatted_data = json.dumps(transcription_status, ensure_ascii=False)
-
             data_en = json.loads(formatted_data)
-
             received_text = data_en['text']  # STT 값
-
             original_script = "Eat well, Sleep well, and Stay healthy!"  # 스크립트
 
             result = metrics.get_cer(received_text, original_script)
-
             cer = result['cer']
             substitutions = result['substitutions']
             deletions = result['deletions']
@@ -226,11 +222,9 @@ def uploadvoice(request):
             print(substitutions)
             print(deletions)
             print(insertions)
-
-            return get_response_based_on_cer(cer)
+            return get_response_based_on_cer(request,"en", file_path, cer)
         
         elif lang == 'kr':
-
             jwt_token = authenticate()
             transcribe_id = transcribe(jwt_token, request.FILES['audio'])
             transcription_status = get_transcription_status(jwt_token, transcribe_id)
@@ -258,7 +252,7 @@ def uploadvoice(request):
             print(deletions)
             print(insertions)
 
-            return get_response_based_on_cer(cer)
+            return get_response_based_on_cer(request,"kr", file_path, cer)
 
     else:
         return JsonResponse({"message": "POST 요청이 아닙니다."})

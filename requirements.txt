@@ -33,3 +33,5 @@ rapidfuzz~=3.5.2
 numpy~=1.26.2
 pandas~=2.1.3
 nlptutti~=0.0.0.8
+boto3~=1.33.7
+pydub~=0.25.1
