@@ -12,3 +12,5 @@ s3 = boto3.client(
     config=Config(signature_version='s3v4'),
     region_name="ap-northeast-2"
 )
+
+bucket_name = ENV("S3_BUCKET_NAME")
