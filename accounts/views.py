@@ -42,7 +42,9 @@ def login(request):
                 response_json["voice_info_en"] = True if profile.get().voice_info_en else False
                 response_json["voice_info_kr"] = True if profile.get().voice_info_kr else False
                 response_json["name"] = profile.get().name
-            return JsonResponse(response_json)
+            return JsonResponse(response_json, status=200)
+        else:
+            return JsonResponse({"error": "Invalid login details"}, status=400)
     else:
         form = AuthenticationForm()
     context = {"form": form}
@@ -57,7 +59,7 @@ def logout(request):
         redirect_url = '/'
         response = HttpResponseRedirect(redirect_url)
         response['X-Json-Response'] = json_response.content  # JSON 응답을 응답 헤더에 추가
-        return response
+        return json_response
     return redirect("login")
 
 
@@ -81,10 +83,12 @@ def signup(request):
             )
             user_profile.save()
 
-            user = authenticate(request, username=user.username, password=form.cleaned_data.get('password1'))
-            auth_login(request, user)
+            return JsonResponse({"message": "The registration has been completed successfully."})
 
-            return JsonResponse({"message": "회원가입이 정상적으로 완료되었습니다."})
+        else:
+            errors = form.errors
+            if 'username' in errors:
+                return JsonResponse({"message": "The username already exists."})
 
     else:
         form = SignupForm()
