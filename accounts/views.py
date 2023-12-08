@@ -83,7 +83,7 @@ def signup(request):
             )
             user_profile.save()
 
-            user = authenticate(request=request, username=form.cleaned_data.get('username'), password=form.cleaned_data.get('password1'))
+            user = authenticate(username=form.cleaned_data.get('username'), password=form.cleaned_data.get('password1'))
             auth_login(request, user)
 
             return JsonResponse({"message": "회원가입이 정상적으로 완료되었습니다."})
