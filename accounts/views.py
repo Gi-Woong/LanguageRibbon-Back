@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import SignupForm
 from .models import UserProfile
 from config.settings import ENV
-from config.s3 import s3
+from config.s3 import s3, bucket_name
 CLIENT_ID = ENV('CLIENT_ID')
 CLIENT_SECRET = ENV('CLIENT_SECRET')
 GPT_KEY = ENV('GPT_KEY')
@@ -38,7 +38,9 @@ def login(request):
                 response_json["voice_info_en"] = True if profile.get().voice_info_en else False
                 response_json["voice_info_kr"] = True if profile.get().voice_info_kr else False
                 response_json["name"] = profile.get().name
-            return JsonResponse(response_json)
+            return JsonResponse(response_json, status=200)
+        else:
+            return JsonResponse({"error": "Invalid login details"}, status=400)
     else:
         form = AuthenticationForm()
     context = {"form": form}
@@ -53,7 +55,7 @@ def logout(request):
         redirect_url = '/'
         response = HttpResponseRedirect(redirect_url)
         response['X-Json-Response'] = json_response.content  # JSON 응답을 응답 헤더에 추가
-        return response
+        return json_response
     return redirect("login")
 
 
@@ -77,10 +79,12 @@ def signup(request):
             )
             user_profile.save()
 
-            user = authenticate(request, username=user.username, password=form.cleaned_data.get('password1'))
-            auth_login(request, user)
+            return JsonResponse({"message": "The registration has been completed successfully."})
 
-            return JsonResponse({"message": "회원가입이 정상적으로 완료되었습니다."})
+        else:
+            errors = form.errors
+            if 'username' in errors:
+                return JsonResponse({"message": "The username already exists."})
 
     else:
         form = SignupForm()
@@ -173,7 +177,7 @@ def get_temporary_file_path(file):
 def get_response_based_on_cer(request, lang_type, file_path, cer):
     if cer <= 0.3:
         try:
-            s3.upload_file(file_path, s3.bucket_name, f"/voices/{request.user.id}_{lang_type}")
+            s3.upload_file(file_path, bucket_name, f"/voices/{request.user.id}_{lang_type}.wav")
             return JsonResponse(
                 {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
                  "metric": {"cer": cer}})

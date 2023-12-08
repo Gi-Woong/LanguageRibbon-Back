@@ -1,5 +1,3 @@
-# from dotenv import load_dotenv
-import os
 import logging
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -108,7 +106,7 @@ def translate_text(input_text, target_lang):
     data = {
         "model": "gpt-4-1106-preview",
         "messages": [
-            {"role": "system", "content": f"{input_text}\n To {target_lang}, JUST translation:"},
+            {"role": "system", "content": f"{input_text}\n To {target_lang}, Rule: Translate the sentence exactly as it is.:"},
         ],
     }
 
