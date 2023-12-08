@@ -258,7 +258,7 @@ def translate_to_voice(request):
                 'file1': open(wav_path, 'rb'),  # 첫 번째 음성 파일
                 'file2': object_data  # 두 번째 음성 파일
             }
-            url = "http://ec2-3-35-53-134.ap-northeast-2.compute.amazonaws.com:1900/convert"
+            url = f"{ENV('AWS_DIFF_VC_SERVER')}/convert"
             diff_vc_response = requests.post(url, files=files)
 
 
