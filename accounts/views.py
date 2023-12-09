@@ -177,7 +177,13 @@ def get_temporary_file_path(file):
 def get_response_based_on_cer(request, lang_type, file_path, cer):
     if cer <= 0.3:
         try:
-            s3.upload_file(file_path, bucket_name, f"/voices/{request.user.id}_{lang_type}.wav")
+            upload_path = f"/voices/{request.user.id}_{lang_type}.wav"
+            s3.upload_file(file_path, bucket_name, upload_path)
+            user_profile = UserProfile.objects.get(user_id=request.user.id)
+            if lang_type == "en":
+                user_profile.voice_info_en = upload_path
+            elif lang_type == "kr":
+                user_profile.voice_info_kr = upload_path
             return JsonResponse(
                 {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
                  "metric": {"cer": cer}})
