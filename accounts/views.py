@@ -203,7 +203,7 @@ def get_response_based_on_cer(request, lang_type, file_path, cer):
 
 @csrf_exempt  # CSRF 보호 기능 비활성화
 def uploadvoice(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and request.user.is_authenticated:
         lang = request.POST.get('lang', 'kr')  # 'lang' 값 받기, 기본값은 'kr'
         audio_file = request.FILES.get('audio')  # 'audio'라는 이름의 파일
 
