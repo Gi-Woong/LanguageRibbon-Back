@@ -184,6 +184,7 @@ def get_response_based_on_cer(request, lang_type, file_path, cer):
                 user_profile.voice_info_en = upload_path
             elif lang_type == "kr":
                 user_profile.voice_info_kr = upload_path
+            user_profile.save()
             return JsonResponse(
                 {"uploadSuccess": True, "confirm": True, "message": "초기 목소리 데이터 수집에 성공했습니다.",
                  "metric": {"cer": cer}})
