@@ -79,7 +79,11 @@ def signup(request):
             )
             user_profile.save()
 
-            return JsonResponse({"message": "The registration has been completed successfully."})
+            # 'user_id'를 JsonResponse에 포함
+            return JsonResponse({
+                "message": "The registration has been completed successfully.",
+                "user_id": user_profile.user_id,
+            })
 
         else:
             errors = form.errors
@@ -178,10 +182,11 @@ def get_temporary_file_path(file):
 def get_response_based_on_cer(request, lang_type, file_path, cer):
     if cer <= 0.3:
         try:
-            upload_path = f"/voices/{request.user.id}_{lang_type}.wav"
+            user_id = request.POST.get('user.id')
+            upload_path = f"/voices/{user_id}_{lang_type}.wav"
             print(upload_path)
             s3.upload_file(file_path, bucket_name, upload_path)
-            user_profile = UserProfile.objects.get(user_id=request.user.id)
+            user_profile = UserProfile.objects.get(user_id=user_id)
             if lang_type == "en":
                 user_profile.voice_info_en = upload_path
             elif lang_type == "kr":
@@ -203,7 +208,7 @@ def get_response_based_on_cer(request, lang_type, file_path, cer):
 
 @csrf_exempt  # CSRF 보호 기능 비활성화
 def uploadvoice(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST':
         lang = request.POST.get('lang', 'kr')  # 'lang' 값 받기, 기본값은 'kr'
         audio_file = request.FILES.get('audio')  # 'audio'라는 이름의 파일
 
@@ -216,6 +221,9 @@ def uploadvoice(request):
             transcription_status = eng_translate_voice_to_text(file_path)
             formatted_data = json.dumps(transcription_status, ensure_ascii=False)
             data_en = json.loads(formatted_data)
+
+            print(formatted_data)
+            print(data_en)
             received_text = data_en['text']  # STT 값
             original_script = "hi i'm korean"  # 스크립트
 
@@ -223,6 +231,8 @@ def uploadvoice(request):
             cer = result['cer']
 
             print(file_path)
+
+            print(request)
             return get_response_based_on_cer(request, "en", file_path, cer)
 
         elif lang == 'kr':
@@ -237,7 +247,7 @@ def uploadvoice(request):
             utterances = data['results']['utterances']
             msgs = ' '.join([utterance['msg'] for utterance in utterances])
 
-            original_script = "안녕하세요 저는 한국인입니다"  # 스크립트
+            original_script = "잘 먹고 잘 자고 건강하세요"  # 스크립트
 
             result = metrics.get_cer(msgs, original_script)
 
