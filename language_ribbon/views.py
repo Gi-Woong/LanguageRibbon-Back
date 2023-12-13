@@ -167,6 +167,8 @@ def translate_to_voice(request):
         target_lang = request.POST.get('target-lang')
 
         if lang == 'en' and target_lang == 'kr':
+            user_id = request.POST.get('user.id')
+
             file_path = get_temporary_file_path(request.FILES['audio'])
 
             transcription_status = eng_translate_voice_to_text(file_path)
@@ -180,9 +182,9 @@ def translate_to_voice(request):
             translate_results = [translate_text(msg, target_lang) for msg in msgs]
 
             voice_files = [translate_text_to_voice(result, target_lang) for result in translate_results][0]
-            print(f"{request.user.id}_{lang}")
+            print(f"{user_id}_{lang}")
             response = s3.get_object(Bucket=bucket_name,
-                                     Key=UserProfile.objects.get(user_id=request.user.id).voice_info_kr)
+                                     Key=UserProfile.objects.get(user_id=user_id).voice_info_kr)
             object_data = response['Body'].read()
             print(voice_files)
             wav_path = voice_files.rstrip(".mp3") + ".wav"
@@ -212,6 +214,8 @@ def translate_to_voice(request):
             # return HttpResponse(json.dumps(results, ensure_ascii=False), content_type="application/json")
 
         if lang == 'kr' and target_lang == 'en':
+            user_id = request.POST.get('user.id')
+
             jwt_token = authenticate()
             transcribe_id = transcribe(jwt_token, request.FILES['audio'])
             transcription_status = get_transcription_status(jwt_token, transcribe_id)
@@ -226,9 +230,9 @@ def translate_to_voice(request):
             translate_results = [translate_text(msg, target_lang) for msg in msgs]
 
             voice_files = [translate_text_to_voice(result, target_lang) for result in translate_results][0]
-            print(f"{request.user.id}_{lang}")
+            print(f"{user_id}_{lang}")
             response = s3.get_object(Bucket=bucket_name,
-                                     Key=UserProfile.objects.get(user_id=request.user.id).voice_info_en)
+                                     Key=UserProfile.objects.get(user_id=user_id).voice_info_en)
             object_data = response['Body'].read()
             print(voice_files)
             wav_path = voice_files.rstrip(".mp3") + ".wav"
