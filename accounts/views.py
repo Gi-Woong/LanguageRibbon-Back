@@ -31,10 +31,12 @@ def login(request):
         form = AuthenticationForm(request, request.POST)
         if form.is_valid():
             response_json = {}
+            user = form.get_user()
             auth_login(request, form.get_user())
             profile = UserProfile.objects.filter(user_id=form.get_user().id)
             profile_exists = profile.exists()
             if profile_exists:
+                response_json["user_id"] = user.id
                 response_json["voice_info_en"] = True if profile.get().voice_info_en else False
                 response_json["voice_info_kr"] = True if profile.get().voice_info_kr else False
                 response_json["name"] = profile.get().name
