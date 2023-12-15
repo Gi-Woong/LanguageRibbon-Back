@@ -227,7 +227,7 @@ def uploadvoice(request):
             print(formatted_data)
             print(data_en)
             received_text = data_en['text']  # STT 값
-            original_script = "hi i'm korean"  # 스크립트
+            original_script = "I register my voice with Language Ribbon nand agree to grant my Language Ribbon account the rights to use my voice"  # 스크립트
 
             result = metrics.get_cer(received_text, original_script)
             cer = result['cer']
@@ -249,7 +249,7 @@ def uploadvoice(request):
             utterances = data['results']['utterances']
             msgs = ' '.join([utterance['msg'] for utterance in utterances])
 
-            original_script = "잘 먹고 잘 자고 건강하세요"  # 스크립트
+            original_script = "저는 랭귀지 리본에 제 목소리를 등록하며, 이를 통해 제 랭귀지 리본 계정에 제 목소리를 사용할 수 있는 권한을 부여함을 동의합니다."  # 스크립트
 
             result = metrics.get_cer(msgs, original_script)
 
